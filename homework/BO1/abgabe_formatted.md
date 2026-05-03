@@ -1,7 +1,7 @@
 # Aufg. 1)
 
-Die Ausgabe von `git status` in diesem Bsp. zeigt, dass die Datein `CONTRIBUTING.md` und `homework/b03.md` bereits per `git add ...` hingzugefügt wurden.
-Es zeigt ebenfalls, dass die Datei `foo.java` noch nicht per `git add ..` hinzugefügt wurde. Man kann ebenfalls noch erkennen, dass man sich aktuell im branch `b03` befindet.
+Die Ausgabe von `git status` in diesem Bsp. zeigt, dass die Datein `CONTRIBUTING.md` und `homework/b03.md` bereits in der Repo vorhanden sind, jedoch geändert wurden und noch per `git add ...` hingzugefügt werden müssen.
+Es zeigt ebenfalls, dass die Datei `foo.java` noch nicht per `git add ..` hinzugefügt wurde und von git noch nicht bekannt ist. Man kann ebenfalls noch erkennen, dass man sich aktuell im branch `b03` befindet.
 
 ## Befehlssequenz
 
