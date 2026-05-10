@@ -1,0 +1,252 @@
+# GitQuest:
+
+## 1)
+
+Schauen welche Datein geändert wurden zwischen den Branches: `git diff master..end`
+Dann einfach eine Datei ändern, welche dort nicht gelistet ist und danach mit `git merge end` mergen.
+
+Gesamte Konsolenausgabe:
+```bash
+PS G:\prog2\aufg2\prog2_ybel_gitquest> git diff master..end --name-only
+questlog.md
+rucksack.md
+stats.md
+PS G:\prog2\aufg2\prog2_ybel_gitquest> git status
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   hero.md
+
+no changes added to commit (use "git add" and/or "git commit -a")
+PS G:\prog2\aufg2\prog2_ybel_gitquest> git add hero.md
+PS G:\prog2\aufg2\prog2_ybel_gitquest> git commit -m "change hero.md"
+[master c257cb6] change hero.md
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+PS G:\prog2\aufg2\prog2_ybel_gitquest> git merge end
+Merge made by the 'ort' strategy.
+ questlog.md | 6 ++++++
+ rucksack.md | 2 +-
+ stats.md    | 6 +++---
+ 3 files changed, 10 insertions(+), 4 deletions(-)
+```
+
+Im master Branch habe ich die hero.md bearbeite und danach einfach den Branch end zusammen mit dem Master gemerged. Dort sieht man, dass einfach nur die Änderungen aus dem Branch end in den
+Master übernommen wurden. Es gab also keinen Merge-Konflikt.
+
+## 2)
+
+Zuerst die Repo wieder neu klonen & dann mit `git checkout end` wie eben den Branch vom remote auf den local holen, danach einfach wieder zurück in master Branch mit `git checkout master`.
+Dann mit `git diff master..end` wieder schauen wo genau die Unterschiede waren und welche Zeilen bearbeitet wurden.
+
+Bei git diff findet man:
+```bash
+diff --git a/rucksack.md b/rucksack.md
+index 80e3019..1adee28 100644
+--- a/rucksack.md
++++ b/rucksack.md
+@@ -3,7 +3,7 @@
+ | Slot | Content                             |
+ |------|-------------------------------------|
+ | 0    | 1 Heiltrank                         |
+-| 1    |                                     |
++| 1    | 1 Amulett                           |
+ | 2    |                                     |
+ | 3    |                                     |
+ | 4    |                                     |
+```
+
+Geändert habe ich im master branch auf Slot 6 ein Brot (also eine andere Zeile, welche im end Branch nicht verändert wurde).
+Danach habe ich einfach wieder `git merge end` gemacht.
+
+Konsolenausgabe:
+```bash
+PS G:\prog2\aufg21\prog2_ybel_gitquest> git add rucksack.md
+PS G:\prog2\aufg21\prog2_ybel_gitquest> git commit -m "add 1 brot"
+[master 1cb42b0] add 1 brot
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+PS G:\prog2\aufg21\prog2_ybel_gitquest> git merge end
+Auto-merging rucksack.md
+Merge made by the 'ort' strategy.
+ questlog.md | 6 ++++++
+ rucksack.md | 2 +-
+ stats.md    | 6 +++---
+ 3 files changed, 10 insertions(+), 4 deletions(-)
+```
+
+Dort erkennt man, dass Git den Konflikt von selbst gelöst hat, da die veränderten Zeilen nichts miteinander zutun hatten.
+
+## 3)
+
+### 3.1:
+
+Wenn ich wieder einen frischen Klon gemacht habe & mir angesehen habe, welche Zeilen in z.B. rucksack.md geändert wurden, dann ändere ich auf dem Master einfach genau das gleiche und versuche dann
+zu mergen. Dabei ensteht kein Konflikt und der Merge geht ohne Probleme durch.
+
+### 3.2:
+
+Zuerst habe ich wieder einen frischen Klon gemacht. Danach habe ich wieder geschaut was genau die Differenz zwischen master & end ist & habe dann einfach die selbe Zeile bearbeitet.
+Wenn ich jetzt mergen will ensteht ein Merge-Konflikt, welchen ich manuel lösen muss:
+
+rucksack.md:
+```md
+# Rucksack
+
+| Slot | Content                             |
+|------|-------------------------------------|
+| 0    | 1 Heiltrank                         |
+<<<<<<< HEAD
+| 1    | 2 Brot                              |
+=======
+| 1    | 1 Amulett                           |
+>>>>>>> end
+| 2    |                                     |
+| 3    |                                     |
+| 4    |                                     |
+| 5    |                                     |
+| 6    |                                     |
+```
+
+Dort sieht man, dass im Slot 1 aktuell 2 Brot eingetragen ist, aber aus dem Branch end auf dem Slot 1 Amulett liegt. Jetzt muss ich in der Datei einfach manuell die Änderungen schreiben,
+welche ich haben möchte.
+Nun einfach nur noch `git add .` & `git commit -m "conflict resolved"` und man hat den Merge erfolgreich beendet.
+
+## 4)
+
+Zuerst die Repo wieder neu klonen. Dann mit `git checkout end` in den Branch end wechseln & mit `git rebase master` den Branch end an die aktuelle Spitze von master setzen.
+Dann einfach mit `git checkout master` zurück in den Master branch wechseln und mit `git merge end`. Dadurch ensteht kein eigener Merge Commit & alle Commits aus dem Branch end
+werden einfach so in den Master Branch übernommen.
+
+# CatCafe:
+
+#### Link zum Fork: https://github.com/CyZeTLC/prog2_ybel_catcafe
+
+Projekt auf github geforked, in InteliJ geladen per VSC.
+Die Datei build.gradle erstellt:
+
+```gradle
+plugins {
+    id 'java'
+}
+
+group 'de.cyzetlc.hsbi'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+```
+
+Dadurch erscheint rechts automatisch die Gradle Sidebar, dort einfach das Projekt zu einem Gradle Projekt wandeln.
+
+Spotless mit google Format & 4 Leerzeichen:
+```gradle
+googleJavaFormat().aosp()
+```
+
+Durch `.aosp()` werden aus den default 2 Leerzeichen 4. Also ja, man kann es auf 4 Leerzeichen anpassen.
+
+Vollständige gradle.build, damit es ausgeführt werden kann & dazu spotless nutzt:
+
+```gradle
+plugins {
+    id 'java'
+    id 'com.diffplug.spotless' version '8.4.0'
+}
+
+group = 'de.cyzetlc.hsbi'
+version = '1.0-SNAPSHOT'
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        googleJavaFormat().aosp()
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.0.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+```
+
+## JUni Tests:
+
+Um mit JUnit zu testen habe ich ein Kopie des Ordners main/java gemacht und diesen test/java genannt. Dort habe ich die Klasse catcafe.CatCafe in catcafe.CatCafeTest umbenannt und
+dort 10 Methoden erstellt mit der Annotation `@Test`, welche die Funktionen des CatCafe testen sollen. Danach habe ich in InteliJ die Klasse CatCafeTest ausgeführt. Als Ergebnis habe
+ich `10 tests passed (46ms)` erhalten. Daraus kann man schließen, dass alle 10 Testfälle bestanden sind.
+
+### Warum sind die Testfälle relevant?
+
+- Zum einen decken sie die Hauptaufgaben vom Cafe ab (z.B. Hinzufügen, Zählen, Suchen).
+- Dazu wird auch mit Einganbe wie `null` getestet oder z.B. bei `CatCafeTest#shouldReturnNullForInvalidWeightRange` mit einer größeren minWeight als maxWeight.
+
+### Warum sind die Testfälle unterschiedlich?
+
+Naja, also die Tests überprüfen ja ganz verschiedene Dinge?
+Bei einem Test wird z.B. überprüft, wie das System auf die Eingabe `null` reagiert und bei einem anderen z.B. ob die Suche geht. Also ich weiß nicht genau, wie wirklich erklären soll, warum
+ich die Test für unterschiedlich halte soll? Das ist ja einfach ein Fakt oder nicht, kann aber auch sein das ich die Aufgabe verkompliziere?
+
+# Git Workflow:
+
+Um beim pushen auf GitHub direkt immer das Projekt zu bauen, zu testen und die Code Formatierung zu überprüfen muss man die Datei `./github/workflows/ci.yml` anlegen.
+In dieser Yaml Datei kann man dann festlegen, wann es ausgeführt wird:
+
+```yml
+on:
+    push:
+        branches: [ "master" ]
+    pull_request:
+        branches: [ "master" ]
+```
+
+Ich habe es bei mir für pushes und bei pull_request gemacht.
+
+Dazu kann man dann in der Datei noch einen Job anlegen, also was genau passieren soll.
+
+```yml
+jobs:
+    build-test-format:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Code auschecken
+              uses: actions/checkout@v4
+
+            - name: JDK 25 einrichten
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '25'
+                  distribution: 'temurin'
+                  cache: gradle
+
+            - name: Berechtigungen für Gradlew setzen
+              run: chmod +x gradlew
+
+            - name: Projekt bauen
+              run: ./gradlew assemble
+
+            - name: Tests ausführen
+              run: ./gradlew test
+
+            - name: Prüfen mit Spotless
+              run: ./gradlew spotlessCheck
+```
+
+Die Namen für die einzelnen Steps beschreiben bereits ganz gut, was dort passiert. `runs-on` ist ubuntu ausgewählt, da die github Cloud auf einem ubuntu System läuft. Die Berechitung für
+Gradle muss ebenfalls gesetz werden, da ansonsten die Datei nicht ausgeführt werden kann. Dazu ist wichtig zu wissen, dass man die gradle Datein noch zur Repo hinzufügen muss, da ansonsten
+GitHub die Gradle nicht findet.
