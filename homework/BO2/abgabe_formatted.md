@@ -190,6 +190,8 @@ Um mit JUnit zu testen habe ich ein Kopie des Ordners main/java gemacht und dies
 dort 10 Methoden erstellt mit der Annotation `@Test`, welche die Funktionen des CatCafe testen sollen. Danach habe ich in InteliJ die Klasse CatCafeTest ausgeführt. Als Ergebnis habe
 ich `10 tests passed (46ms)` erhalten. Daraus kann man schließen, dass alle 10 Testfälle bestanden sind.
 
+Die Dokumentation mit Give - When - Then befindet sich im SourceCode von [CatCafeTest.java](https://github.com/CyZeTLC/prog2_ybel_catcafe/blob/master/src/test/java/catcafe/CatCafeTest.java).
+
 ### Warum sind die Testfälle relevant?
 
 - Zum einen decken sie die Hauptaufgaben vom Cafe ab (z.B. Hinzufügen, Zählen, Suchen).
