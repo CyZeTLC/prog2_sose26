@@ -101,8 +101,8 @@ rucksack.md:
 | 4    |                                     |
 | 5    |                                     |
 | 6    |                                     |
-
 ```
+
 Dort sieht man, dass im Slot 1 aktuell 2 Brot eingetragen ist, aber aus dem Branch end auf dem Slot 1 Amulett liegt. Jetzt muss ich in der Datei einfach manuell die Änderungen schreiben,
 welche ich haben möchte.
 Nun einfach nur noch `git add .` & `git commit -m "conflict resolved"` und man hat den Merge erfolgreich beendet.
