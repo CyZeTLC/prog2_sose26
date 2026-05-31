@@ -1,0 +1,424 @@
+# Blatt 04: RegEx, Template-Method; JUnit; PR
+
+Link zur Repo/Fork: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/
+
+## Aufg. 1)
+
+### Aufg. 1.1)
+
+Um die Methode zu vervollständigen habe ich einfach die einzelnen Tokens noch mit in die Liste gepackt. Dafür habe ich mit regulären Ausdrücken die jeweiligen Dinge abgedeckt.
+Bei den Keywords habe ich auch mehr als von der Aufgabenstellung verlangt, damit es auch eine möglichst vollständige Liste ist.
+
+Quellcode: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/blob/master/src/main/java/highlighting/presets/MiniJavaTokens.java
+
+```java
+    public static List<Token> defaultTokens() {
+        return List.of(
+                // Line comments
+                Token.of(Pattern.compile("//.*"), MiniJavaColours.LINE_COMMENT_COLOUR),
+
+                // annotations, comments, identifiers, numbers, operators, etc.
+                Token.of(
+                        Pattern.compile("\"([^\"\\\\]|\\\\.)*\""),
+                        MiniJavaColours.STRING_LITERAL_COLOUR),
+
+                // Character literals
+                Token.of(
+                        Pattern.compile("'([^'\\\\]|\\\\.)'"), MiniJavaColours.CHAR_LITERAL_COLOUR),
+
+                // Keywords
+                Token.of(
+                        Pattern.compile(
+                                "\\b(package|import|class|public|private|protected|static|final|void|int|boolean|char|if|else|while|for|return|new|this|null|true|false|extends|implements|interface|abstract|try|catch|finally|throw|throws|switch|case|break|continue|default)\\b"),
+                        MiniJavaColours.KEYWORD_COLOUR),
+
+                // Annotations
+                Token.of(
+                        Pattern.compile("@[A-Za-z_][A-Za-z0-9_]*"),
+                        MiniJavaColours.ANNOTATION_COLOUR),
+
+                // JavaDoc comments
+                Token.of(
+                        Pattern.compile("/\\*\\*([\\s\\S]*?)\\*/"),
+                        MiniJavaColours.JAVADOC_COMMENT_COLOUR),
+
+                // Block comments
+                Token.of(
+                        Pattern.compile("/\\*([\\s\\S]*?)\\*/"),
+                        MiniJavaColours.BLOCK_COMMENT_COLOUR));
+    }
+```
+
+### Aufg 1.2)
+
+Für die JUnit-Test habe ich mir für jeden einzelnen einfach einen kleinen Codeausschnitt ausgedacht, welcher als Bsp. genutzt wird.
+Vorhanden sind alle bei [Aufgabe 1.2](https://github.com/Programmiermethoden-CampusMinden/Prog2-Lecture-S26/blob/master/homework/b04.md#aufgabe-12-junittests-f%C3%BCr-ihre-token) genannten Tests.
+
+Quellcode: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/blob/master/src/test/java/MiniJavaTokensTest.java
+In der Datei auf GitHub hatte ich das Given-When-Then Muster nicht "implementiert", deswegen habe ich das für die Abgabe hier einmal extra aufgeführt.
+
+```java
+@Test
+void testMatchesAtDifferentPositions() {
+    // Given
+    String atStart = "public class Test {}";
+    String inMiddle = "final public static void main";
+    String atEnd = "if (isValid) return";
+
+    // When
+    List<Integer> indicesStart = getMatchIndices(keywordPattern, atStart);
+    List<Integer> indicesMiddle = getMatchIndices(keywordPattern, inMiddle);
+    List<Integer> indicesEnd = getMatchIndices(keywordPattern, atEnd);
+
+    // Then
+    assertTrue(indicesStart.contains(0));
+    assertTrue(indicesMiddle.contains(13));
+    assertTrue(indicesEnd.contains(13));
+}
+
+@Test
+void testMultipleMatchesInSameText() {
+    // Given
+    String textKeywords = "public static final int value = 0;";
+    String textStrings = "\"first\" + \"second\" + \"third\"";
+
+    // When
+    List<Integer> indicesKeywords = getMatchIndices(keywordPattern, textKeywords);
+    List<Integer> indicesStrings = getMatchIndices(stringPattern, textStrings);
+
+    // Then
+    assertEquals(4, indicesKeywords.size());
+    assertEquals(3, indicesStrings.size());
+}
+
+@Test
+void testNoMatch() {
+    // Given
+    String text = "variable_name = 12345;";
+
+    // When
+    List<Integer> kw = getMatchIndices(keywordPattern, text);
+    List<Integer> str = getMatchIndices(stringPattern, text);
+    List<Integer> anno = getMatchIndices(annotationPattern, text);
+
+    // Then
+    assertTrue(kw.isEmpty());
+    assertTrue(str.isEmpty());
+    assertTrue(anno.isEmpty());
+}
+
+@Test
+void testCommentContainsKeywordLikeText() {
+    // Given
+    String text = "// this contains public and return keywords";
+
+    // When
+    Matcher matcher = lineCommentPattern.matcher(text);
+
+    // Then
+    assertTrue(matcher.matches());
+}
+
+@Test
+void testAnnotationAtStartAndWithSpaces() {
+    // Given
+    String atStart = "@Override";
+    String withSpaces = "    @Test";
+
+    // When
+    List<Integer> indicesStart = getMatchIndices(annotationPattern, atStart);
+    List<Integer> indicesSpaces = getMatchIndices(annotationPattern, withSpaces);
+
+    // Then
+    assertEquals(1, indicesStart.size());
+    assertEquals(0, indicesStart.get(0));
+    assertEquals(1, indicesSpaces.size());
+    assertEquals(4, indicesSpaces.get(0));
+}
+
+@Test
+void testStringsWithCommentSymbols() {
+    // Given
+    String withLineComment = "String url = \"https://google.com\";";
+    String withBlockComment = "String text = \"Text /* with comment */ inside\";";
+
+    // When
+    Matcher matcherLine = stringPattern.matcher(withLineComment);
+    Matcher matcherBlock = stringPattern.matcher(withBlockComment);
+
+    // Then
+    assertTrue(matcherLine.find());
+    assertEquals("\"https://google.com\"", matcherLine.group());
+    assertTrue(matcherBlock.find());
+    assertEquals("\"Text /* with comment */ inside\"", matcherBlock.group());
+}
+```
+
+## Aufg. 2)
+
+### Aufg 2.1)
+
+Quellcode: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/blob/master/src/main/java/highlighting/regex/RegexHighlighter.java
+
+**RegexHighlighter#collectMatches:**
+
+Die Methode geht einfach alle Tokens von MiniJavaTokens durch & testet dann den String auf matches und fügt diese der Rückgabeliste hinzu.
+
+```java
+	@Override
+    public List<HighlightRegion> collectMatches(String text) {
+        List<HighlightRegion> highlightRegions = new LinkedList<>();
+        for (Token token : MiniJavaTokens.defaultTokens()) {
+            highlightRegions.addAll(token.test(text));
+        }
+        return highlightRegions;
+    }
+```
+
+**RegexHighlighter#resolveConflicts:**
+
+In der äußeren Schleife werden alle Regions durchgeschaut und für jede Region geprüft, ob sich diese mit einer anderen Region überschneiden. Die Überschneidung wird durch die innere
+Schleife geprüft. Also kurz gesagt, jede Region wird einzeln mit jeder Region verglichen.
+
+```java
+@Override
+    public List<HighlightRegion> resolveConflicts(List<HighlightRegion> regions) {
+        List<HighlightRegion> highlightRegions = new LinkedList<>();
+
+        for (HighlightRegion region : regions) {
+            int start = region.start();
+            int end = region.end();
+            boolean overlaps = false;
+
+            for (HighlightRegion existing : highlightRegions) {
+                int existingStart = existing.start();
+                int existingEnd = existing.end();
+
+                if (start < existingEnd && end > existingStart) {
+                    overlaps = true;
+                    break;
+                }
+            }
+
+            if (!overlaps) {
+                highlightRegions.add(region);
+            }
+        }
+        return highlightRegions;
+    }
+```
+
+### Aufg 2.2)
+
+Quellcode: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/blob/master/src/test/java/RegexHighlighterTest.java (wie oben ist das Given-When-Then Muster nicht auf GitHub)
+
+Für die Tests habe ich genau wie oben wieder Bsp. Codeausschnitt gemacht, welche für die Tests genutzt werden.
+Die Tests decken genau die Bei [Aufgabe 2.2](https://github.com/Programmiermethoden-CampusMinden/Prog2-Lecture-S26/blob/master/homework/b04.md#aufgabe-23-junittests-f%C3%BCr-den-regexhighlighter) gefragten Tests ab.
+
+```java
+@Test
+void testEmptyTextAndNoMatches() {
+    // Given
+    String emptyText = "";
+    String plainText = "variable = 42;";
+
+    // When
+    List<HighlightRegion> matchesEmpty = highlighter.collectMatches(emptyText);
+    List<HighlightRegion> resolvedEmpty = highlighter.resolveConflicts(matchesEmpty);
+
+    List<HighlightRegion> matchesPlain = highlighter.collectMatches(plainText);
+    List<HighlightRegion> resolvedPlain = highlighter.resolveConflicts(matchesPlain);
+
+    // Then
+    assertTrue(resolvedEmpty.isEmpty());
+    assertTrue(resolvedPlain.isEmpty());
+}
+
+@Test
+void testSimpleCasesWithoutOverlaps() {
+    // Given
+    String text = "public @Override \"hello\"";
+
+    // When
+    List<HighlightRegion> matches = highlighter.collectMatches(text);
+    List<HighlightRegion> resolved = highlighter.resolveConflicts(matches);
+
+    // Then
+    assertEquals(3, resolved.size());
+}
+
+@Test
+void testConsecutiveRegions() {
+    // Given
+    List<HighlightRegion> regions = new ArrayList<>();
+    regions.add(new HighlightRegion(0, 5, MiniJavaColours.KEYWORD_COLOUR));
+    regions.add(new HighlightRegion(5, 10, MiniJavaColours.KEYWORD_COLOUR));
+
+    // When
+    List<HighlightRegion> resolved = highlighter.resolveConflicts(regions);
+
+    // Then
+    assertEquals(2, resolved.size());
+    assertEquals(0, resolved.get(0).start());
+    assertEquals(5, resolved.get(0).end());
+    assertEquals(5, resolved.get(1).start());
+    assertEquals(10, resolved.get(1).end());
+}
+
+@Test
+void testKeywordInsideComment() {
+    // Given
+    String text = "// class Test";
+
+    // When
+    List<HighlightRegion> matches = highlighter.collectMatches(text);
+    boolean hasComment = false;
+    boolean hasKeyword = false;
+
+    for (HighlightRegion region : matches) {
+        if (region.colour().equals(MiniJavaColours.LINE_COMMENT_COLOUR)) {
+            hasComment = true;
+        }
+        if (region.colour().equals(MiniJavaColours.KEYWORD_COLOUR)) {
+            hasKeyword = true;
+        }
+    }
+
+    List<HighlightRegion> resolved = highlighter.resolveConflicts(matches);
+
+    // Then
+    assertTrue(hasComment);
+    assertTrue(hasKeyword);
+    assertEquals(1, resolved.size());
+    assertEquals(MiniJavaColours.LINE_COMMENT_COLOUR, resolved.get(0).colour());
+}
+
+@Test
+void testJavadocAndBlockCommentOverlap() {
+    // Given
+    String text = "/** javadoc */";
+
+    // When
+    List<HighlightRegion> matches = highlighter.collectMatches(text);
+    boolean hasJavadoc = false;
+    boolean hasBlockComment = false;
+
+    for (HighlightRegion region : matches) {
+        if (region.colour().equals(MiniJavaColours.JAVADOC_COMMENT_COLOUR)) {
+            hasJavadoc = true;
+        }
+        if (region.colour().equals(MiniJavaColours.BLOCK_COMMENT_COLOUR)) {
+            hasBlockComment = true;
+        }
+    }
+
+    List<HighlightRegion> resolved = highlighter.resolveConflicts(matches);
+
+    // Then
+    assertTrue(hasJavadoc);
+    assertTrue(hasBlockComment);
+    assertEquals(1, resolved.size());
+    assertEquals(MiniJavaColours.JAVADOC_COMMENT_COLOUR, resolved.get(0).colour());
+}
+
+@Test
+void testTokenPriorityInResolveConflicts() {
+    // Given
+    List<HighlightRegion> regions = new ArrayList<>();
+    HighlightRegion highPriority = new HighlightRegion(0, 10, MiniJavaColours.STRING_LITERAL_COLOUR);
+    HighlightRegion lowPriority = new HighlightRegion(2, 8, MiniJavaColours.KEYWORD_COLOUR);
+
+    regions.add(highPriority);
+    regions.add(lowPriority);
+
+    // When
+    List<HighlightRegion> resolved = highlighter.resolveConflicts(regions);
+
+    // Then
+    assertEquals(1, resolved.size());
+    assertEquals(MiniJavaColours.STRING_LITERAL_COLOUR, resolved.get(0).colour());
+}
+```
+
+## Aufg. 4)
+
+### Aufg 4.1)
+
+Job für build:
+
+`./gradlew classes` dabei ist classes dafür da, dass nur die Klassen gebaut werden & nicht die ganze Jar.
+
+```yaml
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repo
+              uses: actions/checkout@v4
+
+            - name: Set up Java 25
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '25'
+                  distribution: 'temurin'
+                  cache: gradle
+
+            - name: Compile
+              run: ./gradlew classes
+```
+
+Job für die JUnit-Test:
+```yaml
+    test:
+        name: JUnit-Tests
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repo
+              uses: actions/checkout@v4
+
+            - name: Set up Java 25
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '25'
+                  distribution: 'temurin'
+                  cache: gradle
+
+            - name: Run tests
+              run: ./gradlew test
+```
+
+Job für den Codeformat check:
+```yaml
+    format:
+        name: spotlessCheck
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Check out repo
+              uses: actions/checkout@v4
+
+            - name: Set up Java 25
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '25'
+                  distribution: 'temurin'
+                  cache: gradle
+
+            - name: spotlessCheck cmd
+              run: ./gradlew spotlessCheck
+```
+
+### Aufg. 4.2)
+
+Link zur PR für die JavaMiniTokens: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/pull/1
+Link zur PR für den RegexHighlighter: https://github.com/CyZeTLC/prog2_ybel_syntaxhighlighting/pull/2
+
+### Aufg 4.3)
+
+Meine beiden PRs wurden von Leonardo Parrino reviewet und daraufhin von mir verbessert/geändert.
+Mein Review habe ich dementsprechend auch für Leonardo geschrieben. Dieses viel recht kurz aus, da inhaltlich alles eigentlich gut war. Das einzige, was nicht ganz ideal war, war, dass
+er nur eine PR für alles hatte bzw. auch nur einen Branch für die MiniJavaTokens & den RegexHighlighter. Dieses habe ich ihm dementsprechend als Review direkt als erstet geschrieben. Darauf hin hat
+er es in einzelne Branches und zwei neue PRs aufgeteilt. Dieses hatte er dann auch direkt in den master gemerged, weshalb ein weiteres Review nicht mehr möglich war. Ich hatte ihn noch privat gefragt,
+ob er ein weiteres/neues Review haben möchte, aber das passte ihm soweit und er meinte das erste reiche (sehe ich theoretisch auch so) :)
