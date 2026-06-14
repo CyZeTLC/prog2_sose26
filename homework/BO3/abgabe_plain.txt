@@ -1,0 +1,495 @@
+Aufg 1.)
+Der Link zum GitHub: https://github.com/CyZeTLC/prog2_ybel_calculator
+
+Um das Projekt zu laden, habe ich einfach einen Fork der Hauptrepo erzeugt und diesen per VCS in IntelijJ geladen. Danach habe ich einfach wieder die Datei build.gradle erstellt und
+den Inahlt aus der vorherigen Abgabe dorthingepackt:
+
+build.gradle:
+```gradle
+plugins {
+    id 'java'
+    id 'com.diffplug.spotless' version '8.4.0'
+}
+
+group = 'de.cyzetlc.hsbi'
+version = '1.0-SNAPSHOT'
+
+spotless {
+    java {
+        target 'src/*/java/**/*.java'
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+        googleJavaFormat().aosp()
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:6.0.3')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+```
+
+Danach erscheint bei InteliJ direkt das Gradle-Symbol und man kann es mit einem Klick zu einem Gradle-Projekt wandeln.
+
+Aufg 1.1)
+Klasse Sub.java:
+```java
+package calculator;
+
+public class Sub implements Operation {
+    @Override
+    public int doOperation(int a, int b) {
+        return a - b;
+    }
+}
+```
+
+Und bei Calculator#setupOperationSelector:
+```java
+...
+operations.put("Sub", new Sub());
+...
+```
+
+Aufg 1.2)
+
+Calculator#setupOperationSelector:
+```java
+...
+Operation mul = new Operation() {
+            @Override
+            public int doOperation(int a, int b) {
+                return a * b;
+            }
+        };
+        operations.put("Mul", mul);
+...
+```
+
+Aufg. 1.3)
+
+Calculator#setupOperationSelector:
+```java
+...
+operations.put("Div", (a, b) -> a / b);
+...
+```
+
+Aufg 1.4)
+
+Calculator#setupOperationSelector:
+```java
+...
+operationSelector.addActionListener(
+            e -> {
+                try {
+                    result.setText("" + calculate());
+                } catch (NumberFormatException ex) {
+                    System.out.println("Invalid input.");
+                }
+            });
+...
+```
+
+Aufg 2)
+Der Link zum Github: https://github.com/CyZeTLC/prog2_ybel_locksnake
+
+Aufg 2.1)
+
+# Klassendiagramm
+
+```mermaid
+classDiagram
+
+class Main {
+    +main(String[] args)$
+    -handleGameEnd(ActionEvent, GameState, JFrame)$
+}
+
+class GameEngine {
+    -List~Observer~GameState~~ observers
+    -GameState gameState
+    -GamePanel gamePanel
+    +GameEngine(Level level)
+    +state() GameState
+    +setGamePanel(GamePanel panel)
+    +update(Direction d)
+    +notifyObserver(GameState state)
+    +tick()
+    +updateGameState(GameState state)
+    +getObservers() List~Observer~GameState~~
+}
+
+class GameState {
+    -Level level
+    -Snake snake
+    -List~Pin~ pins
+    -Status status
+    -Direction pendingDirection
+    +GameState(Level, Snake, List~Pin~, Status, Direction)
+    +level() Level
+    +snake() Snake
+    +pins() List~Pin~
+    +status() Status
+    +pendingDirection() Direction
+    +setPendingDirection(Direction)
+    +tick() GameState
+    +getPinAt(Position) Optional~Pin~
+    +checkAllPinsSet() boolean
+}
+
+class GameState_Status {
+    <<enumeration>>
+    RUNNING
+    WON
+    LOST_SELF_COLLISION
+    LOST_OUT_OF_BOUNDS
+    +isRunning() boolean
+}
+
+class Observer {
+    <<interface>>
+    +update(T param)
+}
+
+class GamePanel {
+    -List~Observer~Direction~~ observers
+    -GameState state
+    -GameRenderer renderer
+    -GameEngine gameEngine
+    +GamePanel(GameState, GameRenderer)
+    +update(GameState newState)
+    +notifyObserver(Direction direction)
+    +setGameEngine(GameEngine engine)
+    +getObservers() List~Observer~Direction~~
+    #paintComponent(Graphics g)
+}
+
+class GameRenderer {
+    <<interface>>
+    +render(Graphics2D, GameState, int)
+}
+
+class Java2DRenderer {
+    +render(Graphics2D, GameState, int)
+}
+
+class TextureRenderer {
+    -BufferedImage WALL_TEX
+    -BufferedImage FLOOR_TEX
+    -BufferedImage PIN_LOW_TEX
+    -BufferedImage PIN_HIGH_TEX
+    -BufferedImage SNAKE_HEAD_TEX
+    -BufferedImage SNAKE_BODY_TEX
+    +TextureRenderer()
+    +render(Graphics2D, GameState, int)
+}
+
+class Level {
+    -int width
+    -int height
+    -CellType[][] cells
+    -List~Pin~ pins
+    -Position snakeStart
+    +Level(int, int, CellType[][], List~Pin~, Position)
+    +isInside(Position) boolean
+    +cellAt(Position) CellType
+    +width() int
+    +height() int
+    +cells() CellType[][]
+    +pins() List~Pin~
+    +snakeStart() Position
+}
+
+class Snake {
+    -List~Position~ body
+    +Snake(List~Position~)
+    +head() Position
+    +body() List~Position~
+    +nextHead(Direction) Position
+    +occupies(Position) boolean
+    +grow(Direction) Snake
+}
+
+class Pin {
+    -Position position
+    -State state
+    -Direction activationDirection
+    +Pin(Position, State, Direction)
+    +withState(State) Pin
+    +position() Position
+    +state() State
+    +activationDirection() Direction
+}
+
+class Pin_State {
+    <<enumeration>>
+    LOW
+    HIGH
+    +isSet() boolean
+}
+
+class Position {
+    <<record>>
+    +int x
+    +int y
+}
+
+class Direction {
+    <<enumeration>>
+    UP
+    DOWN
+    LEFT
+    RIGHT
+    NONE
+    +applyTo(Position) Position
+    +oppositeDirection() Direction
+}
+
+class CellType {
+    <<enumeration>>
+    EMPTY
+    WALL
+    PIN_SLOT
+}
+
+class LevelLoader {
+    +loadLevelFromPath(Path)$ Level
+    +loadLevelFromResource(String)$ Level
+    -parseLines(List~String~)$ Level
+}
+
+class MusicPlayer {
+    +playLoopFromResource(String)$
+}
+
+class AudioConstants {
+    +BACKGROUND_MUSIC_RESOURCE$
+}
+
+class GameConstants {
+    +TICK_MS$
+    +TILE_SIZE$
+}
+
+class InputConstants {
+    +BINDINGS$
+}
+
+class LevelConstants {
+    +defaultLevel()$ String
+    +levelById(Id)$ String
+}
+
+class LevelConstants_Id {
+    <<enumeration>>
+    LEVEL1
+    LEVEL2
+}
+
+class TextureConstants {
+    +WALL_TEXTURE$
+    +FLOOR_TEXTURE$
+    +PIN_LOW_TEXTURE$
+    +PIN_HIGH_TEXTURE$
+    +SNAKE_HEAD_TEXTURE$
+    +SNAKE_BODY_TEXTURE$
+}
+
+Main --> GameEngine : creates
+Main --> GamePanel : creates
+Main --> LevelLoader : uses
+
+GameEngine ..|> Observer~Direction~ : implements
+GameEngine --> GameState : manages
+GameEngine --> GamePanel : notifies
+
+GamePanel ..|> Observer~GameState~ : implements
+GamePanel --> GameRenderer : uses
+GamePanel --> GameState : displays
+GamePanel --> GameEngine : notifies
+
+GameState --> Level : contains
+GameState --> Snake : contains
+GameState --> Pin : contains
+GameState --> Direction : uses
+GameState *-- GameState_Status : inner enum
+
+GameRenderer <|.. Java2DRenderer : implements
+GameRenderer <|.. TextureRenderer : implements
+
+Level --> CellType : uses
+Level --> Position : uses
+Level --> Pin : contains
+
+Snake --> Position : uses
+Snake --> Direction : uses
+
+Pin --> Position : has
+Pin --> Direction : has
+Pin *-- Pin_State : inner enum
+
+Direction --> Position : uses
+
+LevelLoader --> Level : creates
+LevelLoader --> Pin : creates
+LevelLoader --> CellType : uses
+LevelLoader --> Direction : uses
+LevelLoader --> Position : uses
+
+LevelConstants *-- LevelConstants_Id : inner enum
+
+Java2DRenderer --> GameState : reads
+TextureRenderer --> GameState : reads
+TextureRenderer --> TextureConstants : uses
+```
+
+---
+
+# Erklärung der wichtigsten Beziehungen
+
+## Steuerung
+
+### `Main`
+
+Startpunkt der Anwendung. Erstellt die Hauptobjekte, lädt das Level und startet den Spiel-Timer.
+
+### `GameEngine`
+
+Zentrale Spiellogik:
+
+* verarbeitet Richtungseingaben via `update(Direction)`
+* treibt den Spielablauf per `tick()` voran
+* benachrichtigt Observer (z. B. `GamePanel`) bei Zustandsänderungen
+
+### `GameState`
+
+Speichert den aktuellen Zustand des Spiels:
+
+* aktuelles Level und Pins
+* Position der Schlange
+* ausstehende Bewegungsrichtung (`pendingDirection`)
+* Spielstatus (`RUNNING`, `WON`, `LOST_SELF_COLLISION`, `LOST_OUT_OF_BOUNDS`)
+
+---
+
+## Darstellung (Rendering)
+
+### `GamePanel`
+
+Verantwortlich für die grafische Anzeige und Tastatureingaben.
+
+Nutzt:
+
+* `GameRenderer` zum Zeichnen
+* `GameEngine` zum Weiterleiten von Eingaben
+* `GameState` als Datenquelle
+
+### `GameRenderer`
+
+Interface für unterschiedliche Render-Techniken.
+
+Implementierungen:
+
+* `Java2DRenderer` – zeichnet mit einfachen Java2D-Formen und Farben
+* `TextureRenderer` – zeichnet mit Bild-Texturen (Draft)
+
+---
+
+## Spielobjekte
+
+### `Snake`
+
+Repräsentiert die Spielfigur.
+
+Wichtige Aufgaben:
+
+* Bewegung (`nextHead`)
+* Wachstum (`grow`)
+* Verwaltung des Körpers als `List<Position>`
+
+### `Level`
+
+Enthält die Spielfeldstruktur (`CellType[][]`), die Pin-Liste und die Startposition der Schlange.
+
+### `Pin`
+
+Ein zu aktivierender Stift mit Position, Zustand (`LOW`/`HIGH`) und Aktivierungsrichtung.
+
+### `Direction`
+
+Enum für Bewegungsrichtungen: `UP`, `DOWN`, `LEFT`, `RIGHT`, `NONE`.
+
+### `Position`
+
+Record für eine 2D-Koordinate (`x`, `y`).
+
+---
+
+## Infrastruktur
+
+### `LevelLoader`
+
+Lädt und parst Levels aus Dateien oder Ressourcen.
+
+### `MusicPlayer`
+
+Spielt WAV-Audiodateien als Loop ab (Draft).
+
+### Settings-Klassen
+
+Enthalten Konstanten für Spiel (`GameConstants`), Eingaben (`InputConstants`), Level-Pfade (`LevelConstants`), Texturen (`TextureConstants`) und Audio (`AudioConstants`).
+
+Aufg 2.2)
+
+Die gesamte Implementierung der TODOs finden sich in der [Repo](https://github.com/CyZeTLC/prog2_ybel_locksnake) wieder.
+
+Aufg 2.3)
+
+Auch hier findet sich die Implementierung wieder in der [Repo](https://github.com/CyZeTLC/prog2_ybel_locksnake), jedoch wollte ich noch dazu ergänzen, dass ich mir nicht zu 100% sicher war, wie genau die Umsetzung erfolgen sollte, weshalb ich jeweils noch im Code ein Kommentar hinerlassen habe. Ich war mir nicht sicher, ob ich halt einfach nur die Methode im z.B. GamePanel o.Ä. aufrufen sollte oder z.B. so eine List mit Observern haben sollte und dann für alle Oberserver in der Liste diese Methode aufrufen soll, deshalb habe ich im Code einfach im Kommentar einmal beide wegen noch beschrieben :)
+
+Aufg 2.4)
+
+# GameStateTest – Testbeschreibung
+
+## Tests
+
+### `stateShouldRetainAllPassedConstructorArguments`
+Prüft, ob der Konstruktor alle Argumente korrekt speichert und die Getter die exakt gleichen Objekte zurückliefern.
+
+### `tickShouldReturnSameInstanceWhenSnakeHasNoPendingDirection`
+Stellt sicher, dass `tick()` dasselbe Objekt zurückgibt, wenn keine Richtung gesetzt ist – also kein unnötiger neuer Zustand erzeugt wird.
+
+### `snakeShouldAdvanceAndExtendBodyWhenMovingIntoEmptySpace`
+Prüft die normale Bewegung: Kopf verschiebt sich, Körper wächst, `pendingDirection` bleibt erhalten.
+
+### `movementShouldBePreventedAndDirectionClearedWhenHittingObstacle`
+Testet, dass die Schlange bei einer Wand stehen bleibt und `pendingDirection` auf `NONE` zurückgesetzt wird.
+
+### `selfCollisionShouldTransitionGameStatusToLost`
+Prüft, dass der Status auf `LOST_SELF_COLLISION` wechselt, wenn die Schlange ihren eigenen Körper trifft.
+
+### `enteringPinSlotFromIncorrectAngleShouldFreezeMovement`
+Stellt sicher, dass ein Pin aus der falschen Richtung angefahren die Bewegung stoppt, ohne den Pin zu aktivieren.
+
+### `activatedPinShouldActAsSolidImpassableBlockade`
+Prüft, dass ein bereits auf `HIGH` gesetzter Pin wie eine Wand behandelt wird und die Bewegung blockiert.
+
+### `boundaryViolationShouldInstantlyTriggerOutOfBoundsLoss`
+Testet, dass das Verlassen des Spielfelds sofort zu `LOST_OUT_OF_BOUNDS` führt.
+
+### `preCompletedPinStatesShouldAutoWinOnFirstTick`
+Prüft, dass der Status auf `WON` springt, wenn beim ersten `tick()` bereits alle Pins auf `HIGH` stehen.
+
+### `terminalStatesShouldShortCircuitAndIgnoreTickCalls`
+Stellt sicher, dass `tick()` in einem bereits beendeten Zustand nichts tut und dasselbe Objekt zurückgibt.
